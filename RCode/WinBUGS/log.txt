@@ -1,0 +1,63 @@
+display(log)
+check(C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/model.txt)
+model is syntactically correct
+data(C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/data.txt)
+data loaded
+compile(2)
+model compiled
+inits(1,C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/inits1.txt)
+chain initialized but other chain(s) contain uninitialized variables
+inits(2,C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/inits2.txt)
+model is initialized
+gen.inits()
+command #Bugs:gen.inits cannot be executed (is greyed out)
+thin.updater(10)
+update(10)
+set(beta)
+set(b.lab)
+set(sigma)
+set(sigma.lab)
+update(500)
+coda(*,C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/coda)
+stats(*)
+
+Node statistics
+	 node	 mean	 sd	 MC error	2.5%	median	97.5%	start	sample
+	b.lab[1]	-0.08915	0.8939	0.02581	-2.09	-0.0149	1.7	11	1000
+	b.lab[2]	0.7079	1.073	0.04542	-0.6983	0.3937	3.345	11	1000
+	b.lab[3]	-0.1462	0.8258	0.02668	-2.297	-0.06069	1.43	11	1000
+	b.lab[4]	-0.08825	0.8474	0.02223	-2.034	-0.02949	1.816	11	1000
+	b.lab[5]	0.2174	0.8307	0.02766	-1.334	0.09399	2.157	11	1000
+	b.lab[6]	0.04048	0.8125	0.0254	-1.636	0.01719	1.818	11	1000
+	b.lab[7]	0.1094	0.8581	0.02918	-1.622	0.04034	2.127	11	1000
+	b.lab[8]	-0.6115	1.024	0.03823	-3.41	-0.2985	0.8946	11	1000
+	b.lab[9]	-0.3218	0.8594	0.02998	-2.343	-0.1594	1.281	11	1000
+	b.lab[10]	0.01452	0.8151	0.02845	-1.698	0.01556	1.669	11	1000
+	beta[1]	0.8375	2.325	0.06425	-3.74	0.918	5.449	11	1000
+	beta[2]	0.6869	3.223	0.06805	-5.748	0.5338	7.1	11	1000
+	beta[3]	0.4299	3.185	0.08935	-5.743	0.4535	6.435	11	1000
+	beta[4]	0.1575	3.348	0.1103	-6.703	0.256	6.283	11	1000
+	beta[5]	1.836	3.275	0.09978	-4.49	1.671	8.333	11	1000
+	beta[6]	-0.2233	3.209	0.07912	-7.075	-0.2348	5.689	11	1000
+	beta[7]	11.29	3.234	0.08241	5.367	11.3	18.02	11	1000
+	beta[8]	-0.4261	3.253	0.09455	-7.002	-0.422	5.854	11	1000
+	beta[9]	1.089	3.219	0.08351	-5.247	1.031	7.686	11	1000
+	beta[10]	1.562	3.293	0.09811	-5.431	1.541	8.182	11	1000
+	beta[11]	9.724	3.363	0.1038	2.779	9.705	16.34	11	1000
+	beta[12]	10.3	3.344	0.1129	3.665	10.31	16.91	11	1000
+	beta[13]	10.8	3.363	0.09526	4.467	10.79	18.04	11	1000
+	beta[14]	8.954	3.267	0.1126	2.537	8.997	15.3	11	1000
+	beta[15]	3.757	3.313	0.08021	-2.748	3.734	10.52	11	1000
+	beta[16]	0.6449	3.168	0.09196	-5.442	0.6824	7.326	11	1000
+	beta[17]	10.21	3.309	0.09512	3.823	10.05	16.73	11	1000
+	beta[18]	0.606	3.258	0.08498	-5.645	0.6982	6.987	11	1000
+	beta[19]	5.445	3.327	0.1022	-1.191	5.338	11.9	11	1000
+	beta[20]	1.506	3.387	0.09188	-5.175	1.537	8.164	11	1000
+	sigma	7.331	0.4241	0.0135	6.588	7.292	8.276	11	1000
+	sigma.lab	0.8746	0.6783	0.0357	0.03688	0.7708	2.545	11	1000
+history(*,C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/history.odc)
+
+History
+
+save(C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/log.odc)
+save(C:/Users/ayoung/Desktop/Thesis/RCode/WinBUGS/log.txt)

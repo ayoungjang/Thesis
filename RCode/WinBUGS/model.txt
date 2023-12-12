@@ -1,0 +1,17 @@
+model {
+  for (i in 1:n) {
+     y[i] ~ dnorm(mu[i], tau)I(lower[i], upper[i])
+   mu[i] <- inprod2(X[i, ], beta[]) + b.lab[lab[i]]
+  }
+  for (j in 1:n.lab) {
+    b.lab[j] ~ dnorm(0.0, tau.lab)
+  }
+  for (k in 1:n.beta) {
+    beta[k] ~ dnorm(0.0, 1.0E-4)
+  }
+  tau <- pow(sigma, -2)
+  sigma ~ dunif(0.01, 100)
+  tau.lab <- pow(sigma.lab, -2)
+  sigma.lab ~ dunif(0.01, 100)
+  }
+}
