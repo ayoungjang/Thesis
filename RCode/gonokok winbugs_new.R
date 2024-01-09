@@ -7,6 +7,7 @@ getwd()
 
 # read data
 gono.data <- read.table("gono_in.txt", header = T, sep = "\t") # gonokokken data
+
 refmic.data <- read.table("reference MICs_U.txt", header = T, sep = "\t") # reference MICs
 
 # reshape gono.data into long format
@@ -36,6 +37,9 @@ gono.data <- within(gono.data, {
   lower <- ifelse(event==3, log.MIC-1, ifelse(event==2, -100, log.MIC))
   upper <- ifelse(event==3, log.MIC, ifelse(event==2, log.MIC, 100))
 })
+
+#test
+gono.data.origin <- gono.data
 
 refmic.data <- within(refmic.data, {
   # as character
@@ -67,9 +71,6 @@ refmic.data <- within(refmic.data, {
   stam <- factor(stam)
 })
 
-
-
-
 # refmics
 # pdf(file = "resultaten/figure_newdata.pdf", width = 7, height = 7*sqrt(2))
 # n <- ncol(X.pred); d <- 0.25
@@ -93,25 +94,6 @@ refmic.data <- within(refmic.data, {
 # })
 # 
 # dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # remove cef data
@@ -192,7 +174,6 @@ if (read.bugsfit) {
 }
 attach.bugs(bugs.fit)
 
-print(levels(gono.data$lab))
 # labs compared to mean
 lab.data <- data.frame(
   lab = levels(gono.data$lab),
@@ -217,7 +198,7 @@ gono.data$ant <- as.factor(gono.data$ant)
       
       ant_value <- levels(gono.data$ant)[i]
       stam_value <- levels(gono.data$stam)[j]
-      print(stam_value)
+      
       gono.data.sub <- subset(gono.data, ant == ant_value & stam == stam_value)
       
       mod <- with(gono.data.sub, lm(log.MIC.naive ~ 1))
@@ -238,6 +219,9 @@ refmic.newdata <- within(refmic.newdata, {
 # winbugs
 X.pred <- model.matrix(~ (stam+ant)^2, data = refmic.newdata)
 mu <- t(X.pred%*%t(beta))
+dim(X.pred)
+dim(beta)
+
 refmic.newdata <- within(refmic.newdata, {
   E.log.MIC <- colMeans(mu)
   lower.log.MIC <- apply(mu, 2, quantile, 0.025)
