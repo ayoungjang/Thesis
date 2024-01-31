@@ -11,59 +11,28 @@ library(truncnorm)
 setwd("C:/Users/ayoung/Desktop/Thesis/RCode")
 getwd()
 
-min_v <- 1
-max_v <- 32
 s <- 30 # strain numbers
 
 n_o <- 10 # number of observations
 # 10 lab 20 strains
 
 # random number within boundaries
-lb <- 0.0125 # lower boundary
+lb <- 0.0765 # lower boundary
 ub <- 32 # upper boundary
 
-left <- 0.03125
-right <- 16
+left <- 0.00391 #can not be higher than mic boundary
+right <- 64 # even higher
+
+
 # 1< MIC < 32 increasing MIC
 # mic_arr <- c(0.000977,0.00391,0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32)
 # mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
-mic_arr <- c(0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32)
+
+mic_arr <- c(0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32,64,128)
+# mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
+
 sample.data <- data.frame()
 refmic_sample.data <- data.frame()
-
-get_truncated_normal <- function(mean, sd, low, upp, n) {
-  return(rtruncnorm(n, a = (low - mean) / sd, b = (upp - mean) / sd, mean = mean, sd = sd))
-}
-
-# 
-# # Function to generate random numbers with specified mean and sd within a range
-# generate_random_numbers <- function(n, mean_value, sd_value, min_range, max_range,mic_value) {
-#   # Generate random numbers from a normal distribution with specified mean and sd
-#   random_numbers <- rnorm(n, mean = mean_value, sd = sd_value)
-#   
-#   # Allow a certain proportion of values to go beyond the specified range
-#   # You can adjust the proportion based on your requirements
-#   proportion_out_of_range <- 0.1
-#   num_out_of_range <- round(n * proportion_out_of_range)
-#   
-#   # Randomly select indices to go beyond the range
-#   out_of_range_indices <- sample(1:n, num_out_of_range)
-#   
-#   # Generate values beyond the range
-#   # random_numbers[out_of_range_indices] <- runif(num_out_of_range, min_range, max_range)
-#   random_numbers[out_of_range_indices] <-rtruncnorm(n = num_out_of_range, a = mic_arr[1], b = mic_arr[length(mic_arr)], mean = mic_value, sd = sd_value)
-#   
-#   return(random_numbers)
-# }
-
-
-generate_random_MIC <- function(n, l,h) {
-  MIC_values <- numeric(n)
-  for (i in 1:n) {
-    MIC_values[i] <- runif(1, l, h)
-  }
-  return(MIC_values)
-}
 
 
 for (x in 1:s) {
@@ -78,72 +47,54 @@ for (x in 1:s) {
   upper <- numeric(n_o)
   MIC <- numeric(n_o)
   
-  # Y_act <- generate_random_numbers(n_o, mic_value, sd, min_value, max_value,mic_value)
-  # Y_act <- rtruncnorm(n = n_o, a = min_value, b = max_value, mean = mic_value, sd = sd)
-  
-  for (i in 1:n_o) {
     mic_idx <- sample(1:length(mic_arr), 1)
     mic_value <- mic_arr[mic_idx]
-    # m <- round(runif(1, min = 1, max = 32), 1)
-    sd <- mic_value * 2
+    Y_act <- rnorm(n=n_o,mean=mic_value,sd=mic_value*2)
+ 
     min_idx <- ifelse(mic_idx == 1, 1, mic_idx - 1)
     max_idx <- ifelse(mic_idx == length(mic_arr), length(mic_arr), mic_idx + 1)
-  
-    min_value <- mic_arr[min_idx]
+    min_value <- mic_arr[min_idx] 
     max_value <- mic_arr[max_idx]
     
-    randNum <- sample(1:length(mic_arr), 1)
-    mean_val <- 2^(log2(generate_random_MIC(1,min_value,max_value)))
-    std_val <- 2 * generate_random_MIC(1,min_value,max_value)
-    
-    Y_act[i] <- get_truncated_normal(mean_val, std_val, 0, 64, n_o)[1]
-    Y_act[i] <- max(lb, Y_act[i])
-
-    Y_obs[i] <- 2^ceiling(log2(Y_act[i]))
-
-    lower[i] <- 2^floor(log2(Y_act[i]))
-
-    upper[i] <- 2^ceiling(log2(Y_act[i]))
+  for (i in 1:n_o) {
     MIC[i] <- mic_value
+    Y_act[i] <- max(lb, Y_act[i])
+    Y_act[i] <- min(ub,Y_act[i])
+    Y_obs[i] <- 2^ceiling(log2(Y_act[i]))
+    lower[i] <- 2^floor(log2(Y_act[i]))
+    upper[i] <- 2^ceiling(log2(Y_act[i]))
+ 
+   
   }
   # mean should be close to 4
+
   sample.data <- rbind(sample.data, data.frame(lab, stam, MIC, Y_act, Y_obs, lower, upper))
  
 }
 
 lab <- 1:s
-
+stam <- 1:s
 Y_act <- numeric(s)
 Y_obs <- numeric(s) # can divide log2
 lower <- numeric(s)
 upper <- numeric(s)
 MIC <- numeric(s)
-stam <- 1:s
+
+
 
 for (x in 1:s) {
   set.seed(x) # reset
-  # with chosen mean and SD
   mic_idx <- sample(1:length(mic_arr), 1)
   mic_value <- mic_arr[mic_idx]
-  # m <- round(runif(1, min = 1, max = 32), 1)
-  
-  sd <- mic_value * 2
-  min_idx <- ifelse(mic_idx == 1, 1, mic_idx - 1)
-  max_idx <- ifelse(mic_idx == length(mic_arr), length(mic_arr), mic_idx + 1)
-  
-  min_value <- mic_arr[min_idx]
-  max_value <- mic_arr[max_idx]
-  
-  randNum <- sample(1:length(mic_arr), 1)
-  mean_val <- 2^(log2(generate_random_MIC(1,min_value,max_value)))
-  std_val <- 2 * generate_random_MIC(1,min_value,max_value)
-  
-  
-  Y_act[x] <- get_truncated_normal(mean_val, std_val, 0, 64, 10)[1]
+  MIC[x] <- mic_value
+  Y_act[x] <- rnorm(n=1,mean=mic_value,sd=mic_value*2)
+  # with chosen mean and SD
+
   if(Y_act[x] <0) Y_act[x] = Y_act[x]*-1
+  Y_act[x] <- max(lb, Y_act[x])
+
   lower[x] <- 2^floor(log2(Y_act[x]))
   upper[x] <- 2^ceiling(log2(Y_act[x]))
-  MIC[x] <- mic_value
   
 
 }
@@ -167,7 +118,7 @@ sample.data <- within(sample.data, {
   # as Surv
   mode.log.MIC <- log2(as.numeric(names(which.max(table(sample.data$MIC)))))
   log.MIC.surv <- Surv(time = ifelse(event == 3, log.MIC - 1, log.MIC), time2 = log.MIC, event = event, type = "interval")
-  # lower and upper for WinBUGS
+  # # lower and upper for WinBUGS
   lower <- ifelse(event == 3, log.MIC - 1, ifelse(event == 2, -100, log.MIC))
   upper <- ifelse(event == 3, log.MIC, ifelse(event == 2, log.MIC, 100))
 })
@@ -209,7 +160,6 @@ sample.data <- within(sample.data, {
 refmic_sample.data.sub <- subset(refmic_sample.data, select = c(stam, upper, lower, log.MIC))
 names(refmic_sample.data.sub) <- c("stam", "upper.log.MIC.ref", "lower.log.MIC.ref", "log.MIC.ref")
 
-
 #
 # model with WinBUGS
 #
@@ -246,7 +196,7 @@ bugs.data <- with(sample.data, list(n = n, lower = lower, upper = upper, X = X, 
 
 # bugs inits
 bugs.inits <- function() {
-  list(y = with(sample.data, runif(n, lower, upper)), b.lab = rnorm(n.lab, 0, 0.1), beta = rnorm(n.beta), sigma = runif(1), sigma.lab = runif(1))
+  list(y = with(sample.data, runif(n, lower, upper)), b.lab = rnorm(n.lab, -0.5,1), beta = rnorm(n.beta), sigma = runif(1), sigma.lab = runif(1))
 }
 
 
@@ -272,9 +222,7 @@ if (read.bugsfit) {
 
 attach.bugs(bugs.fit)
 
-colSD <- function(x) { # sd
-  sqrt(colSums((x - colMeans(x))^2) / (nrow(x) - 1))
-}
+
 
 sample.data$lab <- as.factor(sample.data$lab)
 # labs compared to mean
@@ -284,8 +232,7 @@ lab.data <- data.frame(
   lab = levels(sample.data$lab),
   diff.log.MIC = colMeans(b.lab),
   lower.diff.log.MIC = apply(b.lab, 2, quantile, 0.025),
-  upper.diff.log.MIC = apply(b.lab, 2, quantile, 0.975)
-)
+  upper.diff.log.MIC = apply(b.lab, 2, quantile, 0.975))
 
 
 sample.data$stam <- as.factor(sample.data$stam)
@@ -307,9 +254,7 @@ k <- 1
 
     mod <- with(sample.data.sub, lm(log.MIC.naive ~ 1))
 
-    # refmic_sample.newdata$mode.log.MIC[k] <- log2(as.numeric(names(which.max(table(sample.data.sub$MIC)))))
-    # refmic_sample.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
-    
+
     refmic_sample.newdata[k, "mode.log.MIC"] <- log2(as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", names(which.max(table(sample.data.sub$MIC)))))))))
     refmic_sample.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
     
@@ -355,6 +300,8 @@ with(lab.data, {
 dev.off()
 
 
+system(paste("open", "resultaten/figure_sample_3.pdf"))
+
 refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique(refmic_sample.newdata$stam[order(as.numeric(refmic_sample.newdata$stam))]))
 n <- ncol(X.samplepred)
 d <- 0.25
@@ -391,10 +338,10 @@ refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique
 
 par(mar = c(8,5.5,2, 5), yaxs = "i"); 
 plot.new();
-plot.window(xlim = c(-10, 6), c(n+0.5, 0.5))
+plot.window(xlim = c(-10, 7), c(n+0.5, 0.5))
 abline(h = seq(0.5, n+0.5, 1), col = 8);
 abline(h = c(10.5, 20.5), lwd = 2); box()
-axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 6, 2), 3), cex.axis = 0.7)
+axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 7, 2), 3), cex.axis = 0.7)
 axis(2, at = 1:n, labels = with(refmic_sample.newdata, levels(interaction(stam, sep = " "))), las = 1, cex.axis = 0.7)
 title(xlab = "MIC")
 
@@ -409,7 +356,8 @@ with(refmic_sample.newdata, {
 par(xpd=TRUE)
 par(new=T)
 par(fig=c(0, 1, 0, 0.2), mar=c(2,2,2,2))
-legend("bottomright", legend = c("Mode MICs", "mean MICs", "lower boundary accounting for interval censoring", " reference MICs"),
+#lower boundary accounting for 
+legend("bottomright", legend = c("Mode MICs", "mean MICs", "interval censoring", " reference MICs"),
        pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black"),
        cex = 0.7, bty = "n")
 dev.off()
