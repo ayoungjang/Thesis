@@ -332,16 +332,23 @@ d <- 0.25
 # dev.off()
 
 pdf_path <- "resultaten/figure_4.pdf"
+
+x_labels <- c(0.000977,0.00391,0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32, 64, 128)
+
+
 pdf(file = pdf_path, width = 7, height = 7 * sqrt(2))
 refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique(as.character(1:n)))
 
 
 par(mar = c(8,5.5,2, 5), yaxs = "i"); 
 plot.new();
-plot.window(xlim = c(-10, 7), c(n+0.5, 0.5))
+plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
+
 abline(h = seq(0.5, n+0.5, 1), col = 8);
-abline(h = c(10.5, 20.5), lwd = 2); box()
-axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 7, 2), 3), cex.axis = 0.7)
+abline(h = c(10.5, 20.5), lwd = 2); box();
+axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
+
+
 axis(2, at = 1:n, labels = with(refmic_sample.newdata, levels(interaction(stam, sep = " "))), las = 1, cex.axis = 0.7)
 title(xlab = "MIC")
 
