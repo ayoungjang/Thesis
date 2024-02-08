@@ -50,16 +50,13 @@ for (x in 1:s) {
     mic_idx <- sample(1:length(mic_arr), 1)
     mic_value <- mic_arr[mic_idx]
     Y_act <- rnorm(n=n_o,mean=mic_value,sd=mic_value*2)
- 
-    min_idx <- ifelse(mic_idx == 1, 1, mic_idx - 1)
-    max_idx <- ifelse(mic_idx == length(mic_arr), length(mic_arr), mic_idx + 1)
-    min_value <- mic_arr[min_idx] 
-    max_value <- mic_arr[max_idx]
+
     
   for (i in 1:n_o) {
     MIC[i] <- mic_value
     Y_act[i] <- max(lb, Y_act[i])
     Y_act[i] <- min(ub,Y_act[i])
+    
     Y_obs[i] <- 2^ceiling(log2(Y_act[i]))
     lower[i] <- 2^floor(log2(Y_act[i]))
     upper[i] <- 2^ceiling(log2(Y_act[i]))
@@ -157,7 +154,7 @@ sample.data <- within(sample.data, {
 })
 
 
-refmic_sample.data.sub <- subset(refmic_sample.data, select = c(stam, upper, lower, log.MIC))
+refmic_sample.data.sub <- subset(refmic_sample.data, select = c(stam, upper, lower, log.MIC,))
 names(refmic_sample.data.sub) <- c("stam", "upper.log.MIC.ref", "lower.log.MIC.ref", "log.MIC.ref")
 
 #
@@ -238,11 +235,13 @@ lab.data <- data.frame(
 sample.data$stam <- as.factor(sample.data$stam)
 
 # make sample new data
-refmic_sample.newdata <- with(sample.data, expand.grid(stam = levels(stam)))
+refmic_sample.newdata <- with(sample.data, expand.grid(stam = levels(stam),log.MIC.surv ))
 refmic_sample.newdata <- within(refmic_sample.newdata, {
   mode.log.MIC <- NA
   E.log.MIC.naive <- NA
   se.log.MIC.naive <- NA
+
+ 
 })
 
 k <- 1
@@ -257,8 +256,7 @@ k <- 1
 
     refmic_sample.newdata[k, "mode.log.MIC"] <- log2(as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", names(which.max(table(sample.data.sub$MIC)))))))))
     refmic_sample.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
-    
-    
+ 
     k<-k+1
   }
 
@@ -306,42 +304,15 @@ refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique
 n <- ncol(X.samplepred)
 d <- 0.25
 
-# pdf_path <- "resultaten/figure_sample_4_plot.pdf"
-# pdf(file = pdf_path, width = 7, height = 7 * sqrt(2))
-# 
-# par(mar = c(4.5, 5.5, 0.5, 0.5), yaxs = "i")
-# plot.new()
-# plot.window(xlim = c(-10, 6), c(n + 0.5, 0.5))
-# abline(h = seq(0.5, n + 0.5, 1), col = 8)
-# abline(h = c(10.5, 20.5), lwd = 2)
-# box()
-# axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 6, 2), 3), cex.axis = 0.7)
-# axis(2, at = 1:n, labels = with(refmic_sample.newdata, levels(interaction(stam, sep = " "))), las = 1, cex.axis = 0.7)
-# title(xlab = "MIC")
-# 
-# with(refmic_sample.newdata, {
-#   points(mode.log.MIC, 1:length(mode.log.MIC), pch = 0, cex = 0.7)
-#   points(E.log.MIC, 1:length(E.log.MIC) - d, pch = 15, cex = 0.7)
-#   segments(lower.log.MIC, 1:length(lower.log.MIC) - d, upper.log.MIC, 1:length(upper.log.MIC) - d)
-#   points(lower.log.MIC.ref, 1:length(lower.log.MIC.ref) + d, col = 1, cex = 0.7)
-#   points(upper.log.MIC.ref, 1:length(upper.log.MIC.ref) + d, col = 1, pch = 16, cex = 0.7)
-#   segments(lower.log.MIC.ref, 1:length(lower.log.MIC.ref) + d, upper.log.MIC.ref, 1:length(upper.log.MIC.ref) + d, col = 1)
-# })
-# legend("topright", legend = c("Mode", "E", "Reference", "Reference Upper", "Reference Lower"),
-#         pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black", "black"), cex = 0.7, bty = "n")
-# dev.off()
-
 pdf_path <- "resultaten/figure_4.pdf"
-
-x_labels <- c(0.000977,0.00391,0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32, 64, 128)
-
 
 pdf(file = pdf_path, width = 7, height = 7 * sqrt(2))
 refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique(as.character(1:n)))
 
-
 par(mar = c(8,5.5,2, 5), yaxs = "i"); 
 plot.new();
+
+
 plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
 
 abline(h = seq(0.5, n+0.5, 1), col = 8);
@@ -358,6 +329,7 @@ with(refmic_sample.newdata, {
   segments(lower.log.MIC, 1:n-d, upper.log.MIC, 1:n-d)
   points(lower.log.MIC.ref, 1:n+d, col = 1, cex = 0.7)#open circles - lower boundary accounting for interval censoring
   points(upper.log.MIC.ref, 1:n+d, col = 1, pch = 16, cex = 0.7) #solid circles - reference MICs
+
   segments(lower.log.MIC.ref, 1:n+d, upper.log.MIC.ref, 1:n+d, col = 1)
 })
 par(xpd=TRUE)
