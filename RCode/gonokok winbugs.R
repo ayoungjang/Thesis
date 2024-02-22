@@ -215,8 +215,13 @@ dev.off()
 pdf(file = "resultaten/figure 4.pdf", width = 7, height = 7*sqrt(2))
 n <- ncol(X.pred); d <- 0.25
 #windows(7, 10)
-par(mar = c(4.5, 5.5, 0.5, 0.5), yaxs = "i"); plot.new(); plot.window(xlim = c(-10, 6), c(n+0.5, 0.5))
-abline(h = seq(0.5, n+0.5, 1), col = 8); abline(h = c(10.5, 20.5), lwd = 2); box()
+par(mar = c(4.5, 5.5, 0.5, 0.5), yaxs = "i"); 
+plot.new(); 
+plot.window(xlim = c(-10, 6), c(n+0.5, 0.5))
+
+abline(h = seq(0.5, n+0.5, 1), col = 8); 
+abline(h = c(10.5, 20.5), lwd = 2); 
+box()
 axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 6, 2), 3), cex.axis = 0.7)
 axis(2, at = 1:n, labels = with(refmic.newdata, levels(interaction(stam, ant, sep = " "))), las = 1, cex.axis = 0.7)
 title(xlab = "MIC")

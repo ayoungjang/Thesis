@@ -191,6 +191,7 @@ refmic.newdata <- within(refmic.newdata, {mode.log.MIC <- NA; E.log.MIC.naive <-
 
 k<-1
 gono.data$ant <- as.factor(gono.data$ant)
+gono.data$stam <- as.factor(gono.data$stam)
 
   for (i in 1:nlevels(gono.data$ant)) { #nlevels -> delete duplicated factor level count return (=distinct value)
     
@@ -258,13 +259,13 @@ n <- ncol(X.pred); d <- 0.25
 par(mar = c(4.5, 5.5, 0.5, 0.5), yaxs = "i");
 plot.new(); 
 plot.window(xlim = c(-10, 6), c(n+0.5, 0.5))
+
 abline(h = seq(0.5, n+0.5, 1), col = 8); 
 abline(h = c(10.5, 20.5), lwd = 2); box()
 axis(1, at = seq(-10, 6, 2), labels = signif(2^seq(-10, 6, 2), 3), cex.axis = 0.7)
 axis(2, at = 1:n, labels = with(refmic.newdata, levels(interaction(stam, ant, sep = " "))), las = 1, cex.axis = 0.7)
-
-
 title(xlab = "MIC")
+
 with(refmic.newdata, {
   points(mode.log.MIC, 1:n, pch = 0, cex = 0.7)
   points(E.log.MIC, 1:n-d, pch = 15, cex = 0.7)
