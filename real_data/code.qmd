@@ -171,14 +171,14 @@ k<-1
 Gradient_Etest$Species <- as.factor(Gradient_Etest$Species)
 Gradient_Etest$Strain_no <- as.factor(Gradient_Etest$Strain_no)
 
-test <- function(){
+
   for (i in 1:nlevels(Gradient_Etest$Strain_no)) {
   for (j in 1:nlevels(Gradient_Etest$Species)) {
     
     strain_value <- levels(Gradient_Etest$Strain_no)[i]
     species_value <- levels(Gradient_Etest$Species)[j]
  
-    Gradient_Etest.data.sub <- subset(Gradient_Etest, Strain_no == strain_value & Species == species_value)
+    Gradient_Etest.data.sub <- subset(Gradient_Etest, Strain_no == strain_value & )
     
     mod <- with(Gradient_Etest.data.sub, lm(log.MIC.naive ~ 1))
   
@@ -189,8 +189,8 @@ test <- function(){
   }
 }
 
-}
-debug(test)
+
+
 
 ```
 

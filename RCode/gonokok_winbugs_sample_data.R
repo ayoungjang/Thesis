@@ -240,9 +240,6 @@ refmic_sample.newdata <- within(refmic_sample.newdata, {
   mode.log.MIC <- NA
   E.log.MIC.naive <- NA
   se.log.MIC.naive <- NA
-  time1 <- NA
-  time2 <- NA
- 
 })
 
 k <- 1
@@ -253,15 +250,13 @@ k <- 1
     sample.data.sub <- subset(sample.data, stam == stam_value)
 
     mod <- with(sample.data.sub, lm(log.MIC.naive ~ 1))
-
-
     refmic_sample.newdata[k, "mode.log.MIC"] <- log2(as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", names(which.max(table(sample.data.sub$MIC)))))))))
     refmic_sample.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
 
     k<-k+1
   }
 
-refmic_sample.newdata[, c("time1", "time2")] <- refmic_sample.data$log.MIC.surv[, c("time1", "time2")]
+# refmic_sample.newdata[, c("time1", "time2")] <- refmic_sample.data$log.MIC.surv[, c("time1", "time2")]
 
 
 refmic_sample.newdata <- within(refmic_sample.newdata, {

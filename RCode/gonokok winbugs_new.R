@@ -6,7 +6,7 @@ setwd("C:/Users/ayoung/Desktop/Thesis/RCode")
 getwd()
 
 # read data
-gono.data <- read.table("gono_in.txt", header = T, sep = "\t") # gonokokken data
+gono.data <- read.table("gono_in.txt", header = T, sep = "\t") # gono data
 
 refmic.data <- read.table("reference MICs_U.txt", header = T, sep = "\t") # reference MICs
 
@@ -164,6 +164,7 @@ bugs.fit <- bugs(model.file = "model.txt", data = bugs.data, inits = bugs.inits,
 
 # read simulations
 read.bugsfit <- T
+
 if (read.bugsfit) {
   old.wd <- getwd()
   setwd(wbwd)
@@ -228,6 +229,7 @@ refmic.newdata <- within(refmic.newdata, {
   lower.log.MIC <- apply(mu, 2, quantile, 0.025)
   upper.log.MIC <- apply(mu, 2, quantile, 0.975)
 })
+
 refmic.newdata <- merge(refmic.newdata, refmic.data.sub, sort = F)
 
 #
