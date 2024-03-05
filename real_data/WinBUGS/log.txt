@@ -8,27 +8,64 @@ model compiled
 inits(1,C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/inits1.txt)
 chain initialized but other chain(s) contain uninitialized variables
 inits(2,C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/inits2.txt)
-value of uniform sigma must be greater than lower bound
+model is initialized
 gen.inits()
 command #Bugs:gen.inits cannot be executed (is greyed out)
 thin.updater(10)
 update(10)
-command #Bugs:update cannot be executed (is greyed out)
 set(beta)
-command #Bugs:set cannot be executed (is greyed out)
 set(b.lab)
-command #Bugs:set cannot be executed (is greyed out)
 set(sigma)
-command #Bugs:set cannot be executed (is greyed out)
 set(sigma.lab)
-command #Bugs:set cannot be executed (is greyed out)
 update(500)
-command #Bugs:update cannot be executed (is greyed out)
 coda(*,C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/coda)
-command #Bugs:coda cannot be executed (is greyed out)
 stats(*)
-command #Bugs:stats cannot be executed (is greyed out)
+
+Node statistics
+	 node	 mean	 sd	 MC error	2.5%	median	97.5%	start	sample
+	b.lab[1]	-6.016	13.59	1.937	-33.11	-3.094	18.47	11	1000
+	b.lab[2]	2.854	18.77	2.758	-37.48	0.5161	45.27	11	1000
+	b.lab[3]	4.828	14.06	2.014	-29.36	2.508	30.69	11	1000
+	b.lab[4]	-0.9849	18.83	2.729	-36.62	-0.6357	44.68	11	1000
+	b.lab[5]	-6.034	11.73	1.639	-30.76	-2.298	13.77	11	1000
+	b.lab[6]	-5.18	11.93	1.67	-31.73	-2.569	17.99	11	1000
+	b.lab[7]	-4.718	12.06	1.671	-35.76	-2.307	17.5	11	1000
+	b.lab[8]	-0.5728	12.56	1.776	-24.23	-0.3358	26.64	11	1000
+	b.lab[9]	5.094	18.38	2.678	-26.2	0.1793	50.08	11	1000
+	b.lab[10]	-5.109	19.0	2.808	-44.71	-0.302	27.25	11	1000
+	b.lab[11]	8.972	20.86	3.067	-30.91	1.852	49.58	11	1000
+	b.lab[12]	-5.078	18.47	2.698	-42.88	-1.483	28.47	11	1000
+	b.lab[13]	12.8	16.31	2.372	-10.12	8.545	48.55	11	1000
+	b.lab[14]	-4.048	11.7	1.651	-30.33	-1.318	15.82	11	1000
+	b.lab[15]	-0.7419	11.4	1.554	-25.1	-0.1925	25.06	11	1000
+	b.lab[16]	0.9302	13.26	1.896	-28.29	0.559	25.82	11	1000
+	b.lab[17]	6.856	17.13	2.493	-28.22	4.684	45.37	11	1000
+	b.lab[18]	1.643	14.4	2.037	-27.97	0.1741	29.47	11	1000
+	b.lab[19]	-4.171	11.1	1.525	-28.03	-2.32	16.66	11	1000
+	beta[1]	10.02	13.6	1.938	-14.39	7.396	37.04	11	1000
+	beta[2]	-8.221	22.97	3.319	-73.09	-0.7773	24.22	11	1000
+	beta[3]	-9.878	17.39	2.419	-49.65	-5.337	19.03	11	1000
+	beta[4]	-4.96	22.82	3.252	-71.43	0.2836	26.26	11	1000
+	beta[5]	0.1547	15.28	2.081	-32.82	0.4898	29.98	11	1000
+	beta[6]	-0.8617	17.74	2.519	-44.02	1.181	26.44	11	1000
+	beta[7]	-1.443	16.53	2.286	-32.47	-0.6968	33.49	11	1000
+	beta[8]	-4.682	15.46	2.112	-36.55	-1.197	20.78	11	1000
+	beta[9]	-11.12	27.36	4.016	-73.29	-3.251	35.11	11	1000
+	beta[10]	-1.176	18.0	2.554	-45.19	0.05433	27.08	11	1000
+	beta[11]	-13.11	26.23	3.831	-74.16	-3.913	27.05	11	1000
+	beta[12]	-1.267	17.44	2.413	-38.28	-0.1167	33.5	11	1000
+	beta[13]	-18.72	25.1	3.674	-73.87	-15.15	21.01	11	1000
+	beta[14]	-1.58	15.52	2.166	-30.8	-1.099	30.68	11	1000
+	beta[15]	-5.3	16.13	2.211	-42.4	-2.54	25.69	11	1000
+	beta[16]	-6.692	17.67	2.479	-44.32	-1.794	21.92	11	1000
+	beta[17]	-12.48	26.17	3.835	-66.61	-4.736	34.12	11	1000
+	beta[18]	-7.621	19.73	2.819	-45.77	-1.562	25.63	11	1000
+	beta[19]	-2.286	18.01	2.532	-42.44	-1.777	35.83	11	1000
+	sigma	2.711	0.112	0.003246	2.517	2.706	2.958	11	1000
+	sigma.lab	15.05	9.49	1.343	0.4913	15.82	33.61	11	1000
 history(*,C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/history.odc)
-command #Bugs:history cannot be executed (is greyed out)
+
+History
+
 save(C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/log.odc)
 save(C:/Users/ayoung/Desktop/Thesis/real_data/WinBUGS/log.txt)

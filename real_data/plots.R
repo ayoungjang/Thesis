@@ -1,7 +1,7 @@
 
 setwd("C:/Users/ayoung/Desktop/Thesis/real_data")
 getwd()
-draw_plot <- function(data,name){
+draw_plot <- function(data,name,X.samplepred){
   # 
   # # # labs compared to mean
   # pdf(file = "figure_3.pdf", width = 7, height = 7)
@@ -24,7 +24,9 @@ draw_plot <- function(data,name){
   
   n <- ncol(X.samplepred)
   d <- 0.25
-  
+  label_value <- ifelse(name == "Etest", data.newdata$Strain_no, data.newdata$lab_id)
+  # val <- ifelse(grepl("Etest_Strain", name),lab_id,Strain_no)
+  # print(val)
   
   pdf(file = paste0("figure_",name,".pdf"), width = 7, height = 7 * sqrt(2))
   par(mar = c(8,5.5,2, 5), yaxs = "i");
@@ -53,7 +55,9 @@ draw_plot <- function(data,name){
          pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black"),
          cex = 0.7, bty = "n")
   dev.off()
-  system(paste("open", "figure_4.pdf"))
+  
+  
+  system(paste("open","figure_",name,".pdf"))
   
 }
 

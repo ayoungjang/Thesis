@@ -17,6 +17,7 @@ library(fitdistrplus)
 library(openxlsx)
 library(ggplot2)
 library(reshape2)
+library(truncnorm)
 
 ```
 
@@ -54,7 +55,10 @@ Gradient_data <-  Lre_data[,c("lab_id", "Strain_no","Species", names(Lre_data)[g
 
 Gradient_data <-  merge(Gradient_data, Fasit_data, by = "Strain_no", all.x = TRUE)#merge gradientdata and Fasit data by matching 'Strain_no'
 
-Gradient_data <- na.omit(Gradient_data) #delete NA data
+Gradient_data <- na.omit(Gradient_data) #delete NA dat
+Fasit_data <- na.omit(Fasit_data) 
+
+Fasit_data$LIN_MIC_MTS <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", ifelse(Fasit_data$LIN_MIC_MTS==">256", 512,Fasit_data$LIN_MIC_MTS))))))
 ```
 
 ### Add MIC data
@@ -89,9 +93,13 @@ Gradient_data <- within(Gradient_data, {
 ```{r}
 
 
+Gradient_Etest<- data.frame()
+Gradient_MTS <- data.frame()
 Gradient_Etest <- Gradient_data[Gradient_data$Gradient_test == "E-test/bioMerieux", ]
 Gradient_MTS <- Gradient_data[Gradient_data$Gradient_test != "E-test/bioMerieux", ]
 Gradient_Etest.sub <- subset(Gradient_Etest, select = c(Strain_no, Species, upper, lower, log.MIC))
+
+
 
 
 ```
@@ -99,6 +107,10 @@ Gradient_Etest.sub <- subset(Gradient_Etest, select = c(Strain_no, Species, uppe
 ### Run WINBugs
 
 ```{r}
+
+data<- Gradient_Etest
+
+
 
 wbwd <- file.path(getwd(), "WinBUGS")
 
@@ -123,19 +135,19 @@ cat("model {
 
 
 # bugs data
-X <- model.matrix(~ (Strain_no+Species)^2, data = Gradient_Etest)
+X <- model.matrix(~ (Strain_no)^2, data = data)
 n <- nrow(X);
 n.beta <- ncol(X); 
 
-Gradient_Etest$lab_id <- as.factor(Gradient_Etest$lab_id)
-n.lab <- nlevels(Gradient_Etest$lab_id)
+data$lab_id <- as.factor(data$lab_id)
+n.lab <- nlevels(data$lab_id)
 
-bugs.data <- with(Gradient_Etest, list(n = n, lower = lower, upper = upper, X = X, n.beta = n.beta, n.lab = n.lab, lab = as.numeric(lab_id)))
+bugs.data <- with(data, list(n = n, lower = lower, upper = upper, X = X, n.beta = n.beta, n.lab = n.lab, lab = as.numeric(lab_id)))
 
 
 # bugs inits
 bugs.inits <- function()
-  list(y = with(Gradient_Etest, runif(n, lower, upper)), b.lab = rnorm(n.lab, 0, 0.1), beta = rnorm(n.beta), sigma = runif(1), sigma.lab = runif(1))
+  list(y = with(data, runif(n, lower, upper)), b.lab = rnorm(n.lab, 0, 0.1), beta = rnorm(n.beta), sigma = runif(1), sigma.lab = runif(1))
 
 # bugs fit
 bugs.fit <- bugs(model.file = "model.txt", data = bugs.data, inits = bugs.inits,
@@ -153,6 +165,9 @@ if (read.bugsfit) {
 }
 attach.bugs(bugs.fit)
 
+
+
+
 ```
 
 ### Make mode data
@@ -160,36 +175,79 @@ attach.bugs(bugs.fit)
 ```{r}
 
 
-Gradient_Etest.newdata <- with(Gradient_Etest, expand.grid(Strain_no = levels(Strain_no), Species = levels(Species))) 
+data$Strain_no <- as.factor(data$Strain_no)
+data$Species <- as.factor(data$Species)
 
+data$Strain_no<-drop.levels(data$Strain_no)
+head(data$Strain_no)
+
+
+data$Species<-drop.levels(data$Species)
+head(data$Species)
+
+Fasit_data$Strain_no<-drop.levels(Fasit_data$Strain_no)
+head(Fasit_data$Strain_no)
+
+
+data.newdata <- with(data, expand.grid(Strain_no = levels(Strain_no))) 
+
+data.sub <- within(data.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;})
 
 # naive mean and mode
-Gradient_Etest.newdata <- within(Gradient_Etest.newdata, {mode.log.MIC <- NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
+data.newdata <- within(data.newdata, {mode.log.MIC <- NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
 
 
 k<-1
-Gradient_Etest$Species <- as.factor(Gradient_Etest$Species)
-Gradient_Etest$Strain_no <- as.factor(Gradient_Etest$Strain_no)
 
 
-  for (i in 1:nlevels(Gradient_Etest$Strain_no)) {
-  for (j in 1:nlevels(Gradient_Etest$Species)) {
-    
-    strain_value <- levels(Gradient_Etest$Strain_no)[i]
-    species_value <- levels(Gradient_Etest$Species)[j]
- 
-    Gradient_Etest.data.sub <- subset(Gradient_Etest, Strain_no == strain_value & )
-    
-    mod <- with(Gradient_Etest.data.sub, lm(log.MIC.naive ~ 1))
+for (i in 1:nlevels(data$Strain_no)) {
+  set.seed(i)
+   strain_value <- levels(data$Strain_no)[i]
   
-    Gradient_Etest.newdata[k, "mode.log.MIC"] <- log2(as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", names(which.max(table(Gradient_Etest.data.sub$MIC)))))))))
-    Gradient_Etest.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
-    
-    k <- k+1
-  }
+   crow <- subset(Fasit_data, Strain_no == strain_value)
+   c_value <- as.numeric(crow$LIN_MIC_MTS)
+   
+  Y_act <- rnorm(n=1,mean=c_value, sd=c_value*2)
+   
+  if(Y_act <0) Y_act = Y_act*-1
+   print(Y_act)
+   
+  
+  data.data.sub <- subset(data, Strain_no == strain_value)
+  mod <- with(data.data.sub, lm(log.MIC.naive ~ 1))
+  
+  
+  max_indices <- which.max(table(data.data.sub$MIC.num))
+  max_value <- as.numeric(names(max_indices))
+  
+  
+  #data.sub[k,"lower.log.MIC.ref"]<-2^floor(log2(Y_act))
+  #data.sub[k,"upper.log.MIC.ref"]<- 2^ceiling(log2(Y_act))
+  
+  #data.newdata[k, "mode.log.MIC"] <- log2(max_value)
+  #data.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
+  
+  k <- k+1
 }
 
 
+data.newdata <- within(data.newdata, {
+  lower.log.MIC.naive <- E.log.MIC.naive - 1.96 * se.log.MIC.naive
+  upper.log.MIC.naive <- E.log.MIC.naive + 1.96 * se.log.MIC.naive
+})
+
+X.samplepred <- model.matrix(~(Strain_no)^2, data = data.newdata)
+
+
+#mu_sample <- t(X.samplepred%*%t(beta))
+
+#data.newdata <- within(data.newdata, {
+ # E.log.MIC <- colMeans(mu_sample)
+  #lower.log.MIC <- apply(mu_sample, 2, quantile, 0.025)
+  #upper.log.MIC <- apply(mu_sample, 2, quantile, 0.975)
+#})
+
+#data.newdata <- merge(data.newdata, data.sub, sort = F)
 
 
 ```
@@ -197,42 +255,37 @@ Gradient_Etest$Strain_no <- as.factor(Gradient_Etest$Strain_no)
 ### Draw Plot
 
 ```{r}
-
-pdf_path <- "resultaten/figure_4.pdf"
-
-pdf(file = pdf_path, width = 7, height = 7 * sqrt(2))
-Gradient_Etest.newdata$Strain_no <- factor(Gradient_Etest.newdata$Strain_no, levels = unique(as.character(1:n)))
-
-par(mar = c(8,5.5,2, 5), yaxs = "i"); 
-plot.new();
-
-
-plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
-
-abline(h = seq(0.5, n+0.5, 1), col = 8);
-abline(h = c(10.5, 20.5), lwd = 2); box();
-axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
-
-
-axis(2, at = 1:n, labels = with(Gradient_Etest.newdata, levels(interaction(Strain_no, sep = " "))), las = 1, cex.axis = 0.7)
-title(xlab = "MIC")
-
-with(Gradient_Etest.newdata, {
-  points(mode.log.MIC, 1:n, pch = 0, cex = 0.7) # open squares - mode MICs
-  points(E.log.MIC, 1:n-d, pch = 15, cex = 0.7) #solid square - Predicted mean MICs and 95% confidence intervals
-  segments(lower.log.MIC, 1:n-d, upper.log.MIC, 1:n-d)
-  points(lower.log.MIC.ref, 1:n+d, col = 1, cex = 0.7)#open circles - lower boundary accounting for interval censoring
-  points(upper.log.MIC.ref, 1:n+d, col = 1, pch = 16, cex = 0.7) #solid circles - reference MICs
-  segments(lower.log.MIC.ref, 1:n+d, upper.log.MIC.ref, 1:n+d, col = 1)
-})
-par(xpd=TRUE)
-par(new=T)
-par(fig=c(0, 1, 0, 0.2), mar=c(2,2,2,2))
-#lower boundary accounting for 
-legend("bottomright", legend = c("Mode MICs", "mean MICs", "interval censoring", " reference MICs"),
-       pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black"),
-       cex = 0.7, bty = "n")
-dev.off()
-
-system(paste("open", pdf_path))
+  n <- ncol(X.samplepred)
+  d <- 0.25
+  
+  
+  pdf(file = paste0("figure_",name,".pdf"), width = 7, height = 7 * sqrt(2))
+  par(mar = c(8,5.5,2, 5), yaxs = "i");
+  plot.new();
+  plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
+  
+  abline(h = seq(0.5, n+0.5, 1), col = 8);
+  abline(h = c(10.5, 20.5), lwd = 2); box();
+  axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
+  axis(2, at = 1:n, labels = with(data.newdata, levels(interaction(Strain_no, sep = " "))), las = 1, cex.axis = 0.7)
+  title(xlab = "MIC")
+  
+  with(data.newdata, {
+    points(mode.log.MIC, 1:n, pch = 0, cex = 0.7) #open squares - mod MICs
+    points(E.log.MIC, 1:n-d, pch = 15, cex = 0.7) #solid square - Predicted mean MICs and 
+    segments(lower.log.MIC, 1:n-d, upper.log.MIC, 1:n-d) 
+    points(lower.log.MIC.ref, 1:n+d, col = 1, cex = 0.7) #open circles - lower boundary accounting for interval censoring
+    points(upper.log.MIC.ref, 1:n+d, col = 1, pch = 16, cex = 0.7) # solid circles - reference MICs
+    segments(lower.log.MIC.ref, 1:n+d, upper.log.MIC.ref, 1:n+d, col = 1)
+  })
+  par(xpd=TRUE)
+  par(new=T)
+  par(fig=c(0, 1, 0, 0.2), mar=c(2,2,2,2))
+  #lower boundary accounting for 
+  legend("bottomright", legend = c("Mode MICs", "mean MICs", "interval censoring", " reference MICs"),
+         pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black"),
+         cex = 0.7, bty = "n")
+  dev.off()
+  system( paste0("figure_",name,".pdf"))
+  
 ```

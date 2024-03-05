@@ -5,12 +5,10 @@ library(fitdistrplus)
 library(openxlsx)
 library(ggplot2)
 library(reshape2)
-library(R2WinBUGS)
 library(gmodels)
 library(gdata)
 library(openxlsx)
 source("C:/Users/ayoung/Desktop/Thesis/real_data/plots.R")
-
 setwd("C:/Users/ayoung/Desktop/Thesis/real_data")
 getwd()
 
@@ -37,6 +35,7 @@ Gradient_data <-  merge(Gradient_data, Fasit_data, by = "Strain_no", all.x = TRU
 Gradient_data <- na.omit(Gradient_data)
 Fasit_data <- na.omit(Fasit_data)
 # write.xlsx(Gradient_data,sheetName="sheet1",file="Gradient_data_without_NA.xlsx")
+
 Gradient_data <- within(Gradient_data, {
   MIC <- ifelse(grepl("E-test/bioMerieux", rownames(Gradient_data)), Fasit_data$`LIN_MIC_Etest`, Fasit_data$`LIN_MIC_MTS`)
   
@@ -65,7 +64,7 @@ Gradient_MTS <- Gradient_data[Gradient_data$Gradient_test != "E-test/bioMerieux"
 
 Gradient_Etest <- subset(Gradient_Etest)
 
-data <- Gradient_Etest 
+
 data$Strain_no <- as.factor(data$Strain_no)
 data$Species <- as.factor(data$Species)
 
@@ -77,7 +76,6 @@ head(data$Species)
 
 Fasit_data$Strain_no<-drop.levels(Fasit_data$Strain_no)
 head(Fasit_data$Strain_no)
-
 
 # working dir
 wbwd <- file.path(getwd(), "WinBUGS")
@@ -103,7 +101,7 @@ cat("model {
 
 
 # bugs data
-X <- model.matrix(~ (Strain_no)^2, data = data)
+X <- model.matrix(~ (lab_id)^2, data = data)
 n <- nrow(X);
 n.beta <- ncol(X); 
 
@@ -140,66 +138,101 @@ lab.data <- data.frame(
   lower.diff.log.MIC = apply(b.lab, 2, quantile, 0.025),
   upper.diff.log.MIC = apply(b.lab, 2, quantile, 0.975))
 
-data.newdata <- with(data, expand.grid(Strain_no = levels(Strain_no)))
+Fasit_data$LIN_MIC_MTS <-as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", ifelse(Fasit_data$LIN_MIC_MTS==">256", 512,Fasit_data$LIN_MIC_MTS))))))
 
-data.sub <- within(data.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;})
-data.newdata <- within(data.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
+target_strain <- 2 #1,3,5,6,20 
+
+data_strain <- subset(data, Strain_no == target_strain)
+
+data_strain.newdata <- with(data_strain, expand.grid(lab_id = levels(lab_id)))
+
+data_strain.sub <- within(data_strain.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;})
+data_strain.newdata <- within(data_strain.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
+
+data_strain$Strain_no<-drop.levels(data_strain$Strain_no)
+head(data_strain$Strain_no)
+
+
+data_strain$lab_id<-drop.levels(data_strain$lab_id)
+head(data_strain$lab_id)
+
+c_value <- subset(Fasit_data, Strain_no == target_strain)
 
 k<-1
+up<-512
 
-for (i in 1:nlevels(data$Strain_no)) {
-  strain_value <- levels(data$Strain_no)[i]
-  
-  c_value <- subset(Fasit_data, Strain_no == strain_value)
+for (i in 1:nlevels(data_strain$lab_id)) {
+  set.seed(i)
+  lab_id_v <- levels(data_strain$lab_id)[i]
 
-  data.data.sub <- subset(data, Strain_no == strain_value)
   
+  data_strain.data.sub <- subset(data_strain, lab_id == lab_id_v)
+
+  mod <- with(data_strain.data.sub, lm(log.MIC.naive ~ 1))
   
-  mod <- with(data.data.sub, lm(log.MIC.naive ~ 1))
-  
-  print(mod)
-  max_indices <- which.max(table(data.data.sub$MIC.num))
-  c_value$LIN_MIC_MTS <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", c_value$LIN_MIC_MTS)))))
   Y_act <- rnorm(n=1,mean=c_value$LIN_MIC_MTS,sd=c_value$LIN_MIC_MTS*2)
   if(Y_act <0) Y_act <- Y_act*-1
   
-  max_value <- as.numeric(names(max_indices))
   
-  subset_rows <- data.data.sub$MIC.num == max_value
-  matching_rows <- data.data.sub[subset_rows, ]
-  
-  lower_value <- min(matching_rows$lower)
-  upper_value <- max(matching_rows$upper)
-  
-  data.sub[k,"lower.log.MIC.ref"]<-2^floor(log2(Y_act))
-  data.sub[k,"upper.log.MIC.ref"]<- 2^ceiling(log2(Y_act))
-  
-  data.newdata[k, "mode.log.MIC"] <- log2(max_value)
-  data.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
-  
-  k <- k+1
-}
+  data_strain.sub[k,"lower.log.MIC.ref"]<-2^floor(log2(Y_act))
+  data_strain.sub[k,"upper.log.MIC.ref"]<- 2^ceiling(log2(max(Y_act,up)))
 
-data.newdata <- within(data.newdata, {
+  data_strain.newdata[k, "mode.log.MIC"] <- log2(data_strain.data.sub$MIC.num)
+  data_strain.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
+ #sample variance =0 or difference =0
+   k <- k+1
+}
+summary(mod)
+
+
+data_strain.newdata <- within(data_strain.newdata, {
   lower.log.MIC.naive <- E.log.MIC.naive - 1.96 * se.log.MIC.naive
   upper.log.MIC.naive <- E.log.MIC.naive + 1.96 * se.log.MIC.naive
 })
 
+X.strain <- model.matrix(~(lab_id)^2, data = data_strain.newdata)
 
-X.samplepred <- model.matrix(~(Strain_no)^2, data = data.newdata)
-mu_sample <- t(X.samplepred%*%t(beta))
+mu_strain <- t(X.strain%*%t(beta))
 
-
-
-
-data.newdata <- within(data.newdata, {
-  E.log.MIC <- colMeans(mu_sample)
-  lower.log.MIC <- apply(mu_sample, 2, quantile, 0.025)
-  upper.log.MIC <- apply(mu_sample, 2, quantile, 0.975)
+data_strain.newdata <- within(data_strain.newdata, {
+  E.log.MIC <- colMeans(mu_strain)
+  lower.log.MIC <- apply(mu_strain, 2, quantile, 0.025)
+  upper.log.MIC <- apply(mu_strain, 2, quantile, 0.975)
 })
 
-data.newdata <- merge(data.newdata, data.sub, sort = F)
+data_strain.newdata <- merge(data_strain.newdata, data_strain.sub, sort = F)
 
 
-draw_plot(data,"Etest",X.samplepred)
+n <- ncol(X.strain)
+d <- 0.25
 
+file_path <-(paste0("figure_Strain_",target_strain,".pdf"))
+pdf(file = file_path, width = 7, height = 7 * sqrt(2))
+par(mar = c(8,5.5,2, 5), yaxs = "i");
+plot.new();
+plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
+
+abline(h = seq(0.5, n+0.5, 1), col = 8);
+abline(h = c(10.5, 20.5), lwd = 2); box();
+axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
+axis(2, at = 1:n, labels = with(data_strain.newdata, levels(interaction(lab_id, sep = " "))), las = 1, cex.axis = 0.7)
+title(xlab = "MIC")
+
+with(data_strain.newdata, {
+  points(mode.log.MIC, 1:n, pch = 0, cex = 0.7) #open squares - mod MICs
+  points(E.log.MIC, 1:n-d, pch = 15, cex = 0.7) #solid square - Predicted mean MICs and
+  segments(lower.log.MIC, 1:n-d, upper.log.MIC, 1:n-d)
+  points(lower.log.MIC.ref, 1:n+d, col = 1, cex = 0.7) #open circles - lower boundary accounting for interval censoring
+  # points(upper.log.MIC.ref, 1:n+d, col = 1, pch = 16, cex = 0.7) # solid circles - reference MICs
+  # segments(lower.log.MIC.ref, 1:n+d, upper.log.MIC.ref, 1:n+d, col = 1)
+})
+par(xpd=TRUE)
+par(new=T)
+par(fig=c(0, 1, 0, 0.2), mar=c(2,2,2,2))
+#lower boundary accounting for 
+legend("bottomright", legend = c("Mode MICs", "mean MICs", "interval censoring", " reference MICs"),
+       pch = c(0,
+               15, 1, 16, 1), col = c("black", "black", "black", "black"),
+       cex = 0.7, bty = "n")
+dev.off()
+system(paste("open",file_path))
