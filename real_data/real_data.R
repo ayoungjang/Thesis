@@ -8,8 +8,9 @@ library(reshape2)
 library(R2WinBUGS)
 library(gmodels)
 library(gdata)
+library(statip)
 library(openxlsx)
-source("C:/Users/ayoung/Desktop/Thesis/real_data/plots.R")
+
 
 setwd("C:/Users/ayoung/Desktop/Thesis/real_data")
 getwd()
@@ -141,43 +142,60 @@ lab.data <- data.frame(
   upper.diff.log.MIC = apply(b.lab, 2, quantile, 0.975))
 
 data.newdata <- with(data, expand.grid(Strain_no = levels(Strain_no)))
-
 data.sub <- within(data.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;})
-data.newdata <- within(data.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
+data.newdata <- within(data.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;Species <- NA;})
+
+nlevels(data$lab_id)
 
 k<-1
 
-for (i in 1:nlevels(data$Strain_no)) {
+ for (i in 1:nlevels(data$Strain_no)) {
   strain_value <- levels(data$Strain_no)[i]
   
-  c_value <- subset(Fasit_data, Strain_no == strain_value)
-
+  c_value <- subset(Fasit_data, Strain_no == strain_value) #correct answer (refmic data)
+  
   data.data.sub <- subset(data, Strain_no == strain_value)
   
-  
   mod <- with(data.data.sub, lm(log.MIC.naive ~ 1))
+
+  frequency_values<-mfv(data.data.sub$MIC.num)
   
-  print(mod)
-  max_indices <- which.max(table(data.data.sub$MIC.num))
-  c_value$LIN_MIC_MTS <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", c_value$LIN_MIC_MTS)))))
-  Y_act <- rnorm(n=1,mean=c_value$LIN_MIC_MTS,sd=c_value$LIN_MIC_MTS*2)
-  if(Y_act <0) Y_act <- Y_act*-1
+  c_value$LIN_MIC_Etest <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", c_value$LIN_MIC_Etest)))))
   
-  max_value <- as.numeric(names(max_indices))
+  # Y_act <- rnorm(n=1,mean=c_value$LIN_MIC_Etest,sd=c_value$LIN_MIC_Etest*2)
+  # if(Y_act <0) Y_act <- Y_act*-1
   
-  subset_rows <- data.data.sub$MIC.num == max_value
-  matching_rows <- data.data.sub[subset_rows, ]
+  distances <- abs(frequency_values - c_value$LIN_MIC_Etest)
   
-  lower_value <- min(matching_rows$lower)
-  upper_value <- max(matching_rows$upper)
-  
-  data.sub[k,"lower.log.MIC.ref"]<-2^floor(log2(Y_act))
-  data.sub[k,"upper.log.MIC.ref"]<- 2^ceiling(log2(Y_act))
-  
-  data.newdata[k, "mode.log.MIC"] <- log2(max_value)
+
+  nearest <- frequency_values[which.min(distances)]
+
+  data.newdata[k, "mode.log.MIC"] <- log2(nearest)
+  # subset_rows <- data.data.sub$MIC.num == nearest
+  # matching_rows <- data.data.sub[subset_rows, ]
+  # 
+  # lower_value <- min(matching_rows$lower)
+  # upper_value <- max(matching_rows$upper)
+  # 
+  data.sub[k,"lower.log.MIC.ref"]<-2^(log2(log2(c_value$LIN_MIC_Etest)) - 1)
+  data.sub[k,"upper.log.MIC.ref"]<- 2^(log2(log2(c_value$LIN_MIC_Etest)) + 1)
+
   data.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
   
   k <- k+1
+}
+
+for (i in 1:nrow(data.newdata)) {
+  strain_no <- data.newdata[i, "Strain_no"]
+  
+  # Find the matching species for the current Strain_no
+  matching_species <- unique(data[data$Strain_no == strain_no, "Species"])
+  
+  # Combine the matching species into a single string
+  combined_species <- paste(matching_species, collapse = ", ")
+  
+  # Add the combined species to data.newdata
+  data.newdata[i, "Species"] <- combined_species
 }
 
 data.newdata <- within(data.newdata, {
@@ -189,9 +207,6 @@ data.newdata <- within(data.newdata, {
 X.samplepred <- model.matrix(~(Strain_no)^2, data = data.newdata)
 mu_sample <- t(X.samplepred%*%t(beta))
 
-
-
-
 data.newdata <- within(data.newdata, {
   E.log.MIC <- colMeans(mu_sample)
   lower.log.MIC <- apply(mu_sample, 2, quantile, 0.025)
@@ -199,7 +214,10 @@ data.newdata <- within(data.newdata, {
 })
 
 data.newdata <- merge(data.newdata, data.sub, sort = F)
+data.newdata$upper.log.MIC.ref<-as.double(data.newdata$upper.log.MIC.ref)
 
+n <- ncol(X.samplepred)
 
-draw_plot(data,"Etest",X.samplepred)
+source("C:/Users/ayoung/Desktop/Thesis/real_data/plots.R")
+draw_plot(data.newdata,"Etest",ncol(X.samplepred))
 

@@ -1,7 +1,7 @@
 
 setwd("C:/Users/ayoung/Desktop/Thesis/real_data")
 getwd()
-draw_plot <- function(data,name,X.samplepred){
+draw_plot <- function(data,name,len_col){
   # 
   # # # labs compared to mean
   # pdf(file = "figure_3.pdf", width = 7, height = 7)
@@ -22,24 +22,26 @@ draw_plot <- function(data,name,X.samplepred){
   # system(paste("open", "figure_3.pdf"))
   # 
   
-  n <- ncol(X.samplepred)
+  n <- len_col
+  # species_labels <- ifelse(data$Species == 1, paste(levels(data$Strain_no), "/ faecalis", sep = " "), paste(levels(data$Strain_no), " / faecium", sep = " "))
+  species_labels <- ifelse(substr(data$Species, 1, 1) == "1", paste(levels(data$Strain_no), "faecalis", sep = " "), paste(levels(data$Strain_no), "faecium", sep = " "))
+  
   d <- 0.25
-  label_value <- ifelse(name == "Etest", data.newdata$Strain_no, data.newdata$lab_id)
   # val <- ifelse(grepl("Etest_Strain", name),lab_id,Strain_no)
   # print(val)
   
   pdf(file = paste0("figure_",name,".pdf"), width = 7, height = 7 * sqrt(2))
   par(mar = c(8,5.5,2, 5), yaxs = "i");
   plot.new();
-  plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
+  plot.window(xlim = c(0,8), c(n+0.5, 0.5))
   
   abline(h = seq(0.5, n+0.5, 1), col = 8);
   abline(h = c(10.5, 20.5), lwd = 2); box();
-  axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
-  axis(2, at = 1:n, labels = with(data.newdata, levels(interaction(Strain_no, sep = " "))), las = 1, cex.axis = 0.7)
+  axis(1, at = seq(0,8, 2), labels = signif(2^seq(0, 8, 2), 3), cex.axis = 0.7)
+  axis(2, at = 1:n, labels = with(data, species_labels), las = 1, cex.axis = 0.7)
   title(xlab = "MIC")
   
-  with(data.newdata, {
+  with(data, {
     points(mode.log.MIC, 1:n, pch = 0, cex = 0.7) #open squares - mod MICs
     points(E.log.MIC, 1:n-d, pch = 15, cex = 0.7) #solid square - Predicted mean MICs and 
     segments(lower.log.MIC, 1:n-d, upper.log.MIC, 1:n-d) 
@@ -57,7 +59,7 @@ draw_plot <- function(data,name,X.samplepred){
   dev.off()
   
   
-  system(paste("open","figure_",name,".pdf"))
+  system(paste("open",paste0("figure_",name,".pdf")))
   
 }
 

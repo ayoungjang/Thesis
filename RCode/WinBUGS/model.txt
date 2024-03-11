@@ -1,7 +1,7 @@
 model {
   for (i in 1:n) {
      y[i] ~ dnorm(mu[i], tau)I(lower[i], upper[i])
-     mu[i] <- inprod2(X[i, ], beta[]) + b.lab[lab[i]]
+   mu[i] <- inprod2(X[i, ], beta[]) + b.lab[lab[i]]
   }
   for (j in 1:n.lab) {
     b.lab[j] ~ dnorm(0.0, tau.lab)

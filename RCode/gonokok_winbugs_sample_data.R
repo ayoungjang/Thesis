@@ -11,6 +11,18 @@ library(truncnorm)
 setwd("C:/Users/ayoung/Desktop/Thesis/RCode")
 getwd()
 
+
+
+# 1< MIC < 32 increasing MIC
+# mic_arr <- c(0.000977,0.00391,0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32)
+# mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
+sample.data <- data.frame()
+refmic_sample.data <- data.frame()
+
+# mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
+
+
+
 s <- 30 # strain numbers
 
 n_o <- 10 # number of observations
@@ -22,19 +34,7 @@ ub <- 32 # upper boundary
 
 left <- 0.00391 #can not be higher than mic boundary
 right <- 64 # even higher
-
-
-# 1< MIC < 32 increasing MIC
-# mic_arr <- c(0.000977,0.00391,0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32)
-# mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
-
 mic_arr <- c(0.0156,0.0625,0.125, 0.25, 1, 2, 4, 8, 16, 32,64,128)
-# mic_arr <- c(0.125, 0.25, 1, 2, 4, 8, 16, 32)
-
-sample.data <- data.frame()
-refmic_sample.data <- data.frame()
-
-
 for (x in 1:s) {
   set.seed(x) # reset
   # with chosen mean and SD
@@ -89,14 +89,14 @@ for (x in 1:s) {
 
   if(Y_act[x] <0) Y_act[x] = Y_act[x]*-1
   Y_act[x] <- max(lb, Y_act[x])
-
+  Y_obs[x] <- 2^ceiling(log2(Y_act[x]))
   lower[x] <- 2^floor(log2(Y_act[x]))
   upper[x] <- 2^ceiling(log2(Y_act[x]))
   
 
 }
 
-refmic_sample.data <-  data.frame(stam, MIC,upper,lower)
+refmic_sample.data <-  data.frame(stam, MIC,upper,lower,Y_act,Y_obs)
 
 sample.data <- within(sample.data, {
   # as character
@@ -324,23 +324,24 @@ d <- 0.25
 # legend("topright", legend = c("Mode", "E", "Reference", "Reference Upper", "Reference Lower"),
 #         pch = c(0, 15, 1, 16, 1), col = c("black", "black", "black", "black", "black"), cex = 0.7, bty = "n")
 # dev.off()
-
+# refmic_sample.newdata <-  subset(refmic_sample.newdata, stam %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15))
+# refmic_sample.newdata$stam <- as.numeric(as.character(refmic_sample.newdata$stam))
+# 
+# refmic_sample.newdata <- refmic_sample.newdata[order(refmic_sample.newdata$stam), ]
+# n<-15
 pdf_path <- "resultaten/figure_4.pdf"
 
 pdf(file = pdf_path, width = 7, height = 7 * sqrt(2))
-refmic_sample.newdata$stam <- factor(refmic_sample.newdata$stam, levels = unique(as.character(1:n)))
 
 par(mar = c(8,5.5,2, 5), yaxs = "i"); 
 plot.new();
 
 
-plot.window(xlim = c(-10, 8), c(n+0.5, 0.5))
+plot.window(xlim = c(-5, 9), c(n+0.5, 0.5))
 
 abline(h = seq(0.5, n+0.5, 1), col = 8);
 abline(h = c(10.5, 20.5), lwd = 2); box();
-axis(1, at = seq(-9, 7, 2), labels = signif(2^seq(-9, 7, 2), 3), cex.axis = 0.7)
-
-
+axis(1, at = seq(-5, 9, 2), labels = signif(2^seq(-5,9, 2), 3), cex.axis = 0.7)
 axis(2, at = 1:n, labels = with(refmic_sample.newdata, levels(interaction(stam, sep = " "))), las = 1, cex.axis = 0.7)
 title(xlab = "MIC")
 
