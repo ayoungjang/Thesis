@@ -142,10 +142,9 @@ lab.data <- data.frame(
   upper.diff.log.MIC = apply(b.lab, 2, quantile, 0.975))
 
 data.newdata <- with(data, expand.grid(Strain_no = levels(Strain_no)))
-data.sub <- within(data.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;})
-data.newdata <- within(data.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;Species <- NA;})
 
-nlevels(data$lab_id)
+data.sub <- within(data.newdata, {lower.log.MIC.ref <- NA; upper.log.MIC.ref <- NA;ref.MIC<-NA;})
+data.newdata <- within(data.newdata, {mode.log.MIC<-NA; E.log.MIC.naive <- NA; se.log.MIC.naive <- NA;})
 
 k<-1
 
@@ -177,13 +176,17 @@ k<-1
   # lower_value <- min(matching_rows$lower)
   # upper_value <- max(matching_rows$upper)
   # 
-  data.sub[k,"lower.log.MIC.ref"]<-2^(log2(log2(c_value$LIN_MIC_Etest)) - 1)
-  data.sub[k,"upper.log.MIC.ref"]<- 2^(log2(log2(c_value$LIN_MIC_Etest)) + 1)
-
+  # data.sub[k,"lower.log.MIC.ref"]<-2^(log2(c_value$LIN_MIC_Etest)) - 1
+  # data.sub[k,"upper.log.MIC.ref"]<- log2(c_value$LIN_MIC_Etest)
+  # 
+  data.sub[k,"lower.log.MIC.ref"]<-log2(c_value$LIN_MIC_Etest) - 1
+  data.sub[k,"upper.log.MIC.ref"]<- log2(c_value$LIN_MIC_Etest)
+  # data.sub[k,"ref.MIC"]<- log2(c_value$LIN_MIC_Etest)
+  
   data.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
   
   k <- k+1
-}
+ }
 
 for (i in 1:nrow(data.newdata)) {
   strain_no <- data.newdata[i, "Strain_no"]
@@ -206,6 +209,7 @@ data.newdata <- within(data.newdata, {
 
 X.samplepred <- model.matrix(~(Strain_no)^2, data = data.newdata)
 mu_sample <- t(X.samplepred%*%t(beta))
+
 
 data.newdata <- within(data.newdata, {
   E.log.MIC <- colMeans(mu_sample)
