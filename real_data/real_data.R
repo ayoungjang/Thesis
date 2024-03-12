@@ -64,9 +64,7 @@ Gradient_MTS <- data.frame()
 Gradient_Etest <- Gradient_data[Gradient_data$Gradient_test == "E-test/bioMerieux", ]
 Gradient_MTS <- Gradient_data[Gradient_data$Gradient_test != "E-test/bioMerieux", ]
 
-Gradient_Etest <- subset(Gradient_Etest)
-
-data <- Gradient_Etest 
+data <- Gradient_MTS 
 data$Strain_no <- as.factor(data$Strain_no)
 data$Species <- as.factor(data$Species)
 
@@ -159,28 +157,18 @@ k<-1
 
   frequency_values<-mfv(data.data.sub$MIC.num)
   
-  c_value$LIN_MIC_Etest <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", c_value$LIN_MIC_Etest)))))
+  # c_value$LIN_MIC_MTS <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", c_value$LIN_MIC_MTS)))))
+  c_value$LIN_MIC_MTS <- as.numeric(sub("<", "", sub("<=", "" ,sub(">", "", sub(c(">="), "", ifelse(c_value$LIN_MIC_MTS==">256", 512,c_value$LIN_MIC_MTS))))))
   
-  # Y_act <- rnorm(n=1,mean=c_value$LIN_MIC_Etest,sd=c_value$LIN_MIC_Etest*2)
-  # if(Y_act <0) Y_act <- Y_act*-1
-  
-  distances <- abs(frequency_values - c_value$LIN_MIC_Etest)
+  distances <- abs(frequency_values - c_value$LIN_MIC_MTS)
   
 
   nearest <- frequency_values[which.min(distances)]
 
   data.newdata[k, "mode.log.MIC"] <- log2(nearest)
-  # subset_rows <- data.data.sub$MIC.num == nearest
-  # matching_rows <- data.data.sub[subset_rows, ]
-  # 
-  # lower_value <- min(matching_rows$lower)
-  # upper_value <- max(matching_rows$upper)
-  # 
-  # data.sub[k,"lower.log.MIC.ref"]<-2^(log2(c_value$LIN_MIC_Etest)) - 1
-  # data.sub[k,"upper.log.MIC.ref"]<- log2(c_value$LIN_MIC_Etest)
-  # 
-  data.sub[k,"lower.log.MIC.ref"]<-log2(c_value$LIN_MIC_Etest) - 1
-  data.sub[k,"upper.log.MIC.ref"]<- log2(c_value$LIN_MIC_Etest)
+
+  data.sub[k,"lower.log.MIC.ref"]<-log2(c_value$LIN_MIC_MTS) - 1
+  data.sub[k,"upper.log.MIC.ref"]<- log2(c_value$LIN_MIC_MTS)
   # data.sub[k,"ref.MIC"]<- log2(c_value$LIN_MIC_Etest)
   
   data.newdata[k, c("E.log.MIC.naive", "se.log.MIC.naive")] <- c(coef(mod), sqrt(vcov(mod)))
@@ -223,5 +211,7 @@ data.newdata$upper.log.MIC.ref<-as.double(data.newdata$upper.log.MIC.ref)
 n <- ncol(X.samplepred)
 
 source("C:/Users/ayoung/Desktop/Thesis/real_data/plots.R")
-draw_plot(data.newdata,"Etest",ncol(X.samplepred))
+draw_plot(data.newdata,"MTS",ncol(X.samplepred))
+
+
 
